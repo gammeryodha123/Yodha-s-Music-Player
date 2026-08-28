@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Search - Harmonix{% endblock %}
+{% block content %}
+<h1>Search Songs</h1>
+<div style="display: flex; gap: 10px; margin-bottom: 20px;">
+    <input type="text" id="query" placeholder="Search artists, songs..." style="flex: 1; padding: 12px; border-radius: 20px; border: none; background: #2a2a2a; color: white; outline: none;">
+    <button onclick="performSearch()" style="padding: 12px 24px; border-radius: 20px; border: none; background: #1db954; color: white; font-weight: bold; cursor: pointer;">Search</button>
+</div>
+<div id="results" class="song-list"></div>
+<script>
+    async function performSearch() {
+        const query = document.getElementById('query').value;
+        if (!query) return;
+        const resultsContainer = document.getElementById('results');
+        resultsContainer.innerHTML = '<p>Loading...</p>';
+        try {
+            const res = await fetch(`/search?q=${encodeURIComponent(query)}`);
+            const songs = await res.json();
+            resultsContainer.innerHTML = '';
+            songs.forEach(song => {
+                const card = document.createElement('div');
+                card.className = 'song-card';
+                card.innerHTML = `
+                    <div class="info">
+                        <strong>${song.title}</strong>
+                    </div>
+                    <button onclick="playTrack('${encodeURIComponent(song.url)}')">Play</button>
+                `;
+                resultsContainer.appendChild(card);
+            });
+        } catch (err) {
+            resultsContainer.innerHTML = '<p>Error fetching search results.</p>';
+        }
+    }
+</script>
+{% endblock %}

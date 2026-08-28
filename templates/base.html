@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Music App{% endblock %}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+        body { background-color: #121212; color: #fff; display: flex; height: 100vh; overflow: hidden; }
+        .sidebar { width: 220px; background: #000; padding: 20px; display: flex; flex-direction: column; gap: 20px; }
+        .sidebar h2 { color: #1db954; font-size: 22px; margin-bottom: 10px; }
+        .nav-links { list-style: none; display: flex; flex-direction: column; gap: 15px; }
+        .nav-links li a { color: #b3b3b3; text-decoration: none; font-weight: bold; transition: 0.2s; display: block; }
+        .nav-links li a:hover { color: #fff; }
+        .main-content { flex: 1; padding: 20px; overflow-y: auto; padding-bottom: 100px; }
+        h1 { margin-bottom: 20px; font-size: 28px; }
+        .song-list { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+        .song-card { display: flex; justify-content: space-between; align-items: center; background: #181818; padding: 12px 20px; border-radius: 8px; }
+        .song-card .info { flex: 1; margin-right: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .song-card button { background: #1db954; border: none; padding: 8px 16px; border-radius: 15px; color: white; font-weight: bold; cursor: pointer; }
+        .player-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 80px; background: #181818; border-top: 1px solid #282828; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+        .now-playing { width: 30%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .audio-controls { width: 40%; display: flex; justify-content: center; }
+        audio { width: 100%; max-width: 500px; height: 40px; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar">
+        <h2>Harmonix</h2>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/search-page">Search</a></li>
+            <li><a href="/recent-page">Recently Played</a></li>
+            <li><a href="/playlists-page">Playlists</a></li>
+            <li><a href="/downloads-page">Downloads</a></li>
+        </ul>
+    </nav>
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+    <footer class="player-bar">
+        <div class="now-playing">
+            <strong id="track-title">No Track Selected</strong>
+        </div>
+        <div class="audio-controls">
+            <audio id="audio-player" controls autoplay></audio>
+        </div>
+    </footer>
+    <script>
+        async function playTrack(targetUrl) {
+            try {
+                const res = await fetch(`/play?url=${targetUrl}`);
+                const data = await res.json();
+                if (data.stream_url) {
+                    const audioPlayer = document.getElementById('audio-player');
+                    document.getElementById('track-title').innerText = data.title;
+                    audioPlayer.src = data.stream_url;
+                    audioPlayer.play();
+                }
+            } catch (err) {
+                alert('Failed to play track.');
+            }
+        }
+    </script>
+</body>
+</html>

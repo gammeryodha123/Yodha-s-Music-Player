@@ -1,0 +1,11 @@
+cat << 'EOF' > .gitignore
+__pycache__/
+*.pyc
+.buildozer/
+bin/
+*.apk
+*.aab
+venv/
+.env
+EOF
+
