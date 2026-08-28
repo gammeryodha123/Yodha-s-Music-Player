@@ -1,86 +1,101 @@
-from flask import Flask, request, jsonify, render_template, Response
-import yt_dlp, requests
+import os
+import re
 import urllib.parse
+from flask import Flask, render_template, request, jsonify, Response, stream_with_context
+import yt_dlp
+import requests
 
 app = Flask(__name__)
 
-ydl_search = {'quiet': True, 'skip_download': True, 'extract_flat': True}
-ydl_play = {
+# Options for yt_dlp extraction
+YTDL_OPTIONS = {
     'format': 'bestaudio/best',
     'quiet': True,
     'no_warnings': True,
-    'extractor_args': {'youtube': {'player_client': ['android']}}
+    'extract_flat': False,
+    'nocheckcertificate': True,
 }
 
 @app.route('/')
 def home():
-    return render_template('home.html')
+    """Renders the main music player interface."""
+    return render_template('index.html')
 
-@app.route('/search-page')
-def search_page():
-    return render_template('search.html')
+@app.route('/api/search', methods=['GET'])
+def search_tracks():
+    """Searches YouTube for tracks based on a query string."""
+    query = request.args.get('q', '').strip()
+    if not query:
+        return jsonify({'error': 'Search query is required'}), 400
 
-@app.route('/recent-page')
-def recent_page():
-    return render_template('recent.html')
+    search_url = f"ytsearch10:{query}"
+    
+    try:
+        with yt_dlp.YoutubeDL(YTDL_OPTIONS) as ydl:
+            info = ydl.extract_info(search_url, download=False)
+            results = []
+            
+            for entry in info.get('entries', []):
+                if entry:
+                    results.append({
+                        'id': entry.get('id'),
+                        'title': entry.get('title'),
+                        'uploader': entry.get('uploader'),
+                        'duration': entry.get('duration'),
+                        'thumbnail': entry.get('thumbnail'),
+                    })
+                    
+            return jsonify({'status': 'success', 'results': results})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@app.route('/playlists-page')
-def playlists_page():
-    return render_template('playlists.html')
+@app.route('/api/stream/<video_id>', methods=['GET'])
+def get_stream_info(video_id):
+    """Retrieves direct audio stream URL and details for a given video ID."""
+    url = f"https://www.youtube.com/watch?v={video_id}"
+    
+    try:
+        with yt_dlp.YoutubeDL(YTDL_OPTIONS) as ydl:
+            info = ydl.extract_info(url, download=False)
+            
+            # Select best audio format
+            audio_url = None
+            for fmt in info.get('formats', []):
+                if fmt.get('acodec') != 'none' and fmt.get('vcodec') == 'none':
+                    audio_url = fmt.get('url')
+                    break
+            
+            if not audio_url:
+                audio_url = info.get('url')
 
-@app.route('/downloads-page')
-def downloads_page():
-    return render_template('downloads.html')
+            return jsonify({
+                'status': 'success',
+                'title': info.get('title'),
+                'artist': info.get('uploader'),
+                'thumbnail': info.get('thumbnail'),
+                'stream_url': audio_url
+            })
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
 
-@app.route('/search')
-def search():
-    q = request.args.get('q')
-    if not q:
-        return jsonify([])
-    with yt_dlp.YoutubeDL(ydl_search) as ydl:
-        res = ydl.extract_info(f"ytsearch10:{q}", download=False)
-        songs = [{'title': e.get('title'), 'url': e.get('url'), 'id': e.get('id')} for e in res.get('entries', [])]
-    return jsonify(songs)
-
-@app.route('/play')
-def play():
-    url = request.args.get('url')
-    if not url:
-        return jsonify({'error': 'URL missing'}), 400
-        
-    with yt_dlp.YoutubeDL(ydl_play) as ydl:
-        info = ydl.extract_info(url, download=False)
-        stream_url = info.get('url')
-        
-    encoded_stream_url = urllib.parse.quote(stream_url)
-    return jsonify({
-        'stream_url': f"/stream?url={encoded_stream_url}",
-        'title': info.get('title')
-    })
-
-@app.route('/stream')
-def stream():
-    u = request.args.get('url')
-    if not u:
-        return "Missing stream URL", 400
+@app.route('/api/proxy')
+def proxy_audio():
+    """Proxies the raw audio stream to bypass CORS and access restrictions."""
+    audio_url = request.args.get('url')
+    if not audio_url:
+        return jsonify({'error': 'Missing stream URL'}), 400
 
     headers = {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        'Referer': 'https://www.youtube.com/'
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
     }
-    r = requests.get(u, headers=headers, stream=True)
 
-    def generate():
-        for chunk in r.iter_content(chunk_size=8192):
-            if chunk:
-                yield chunk
-
-    content_type = r.headers.get('Content-Type', 'audio/webm')
+    req = requests.get(audio_url, headers=headers, stream=True)
     return Response(
-        generate(),
-        content_type=content_type,
-        headers={'Accept-Ranges': 'bytes', 'Access-Control-Allow-Origin': '*'}
+        stream_with_context(req.iter_content(chunk_size=1024 * 8)),
+        content_type=req.headers.get('Content-Type', 'audio/mpeg')
     )
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    # Default host/port setup for local development and Android packaging
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
