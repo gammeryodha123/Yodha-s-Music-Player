@@ -1,13 +1,11 @@
 import os
-import re
-import urllib.parse
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context
 import yt_dlp
 import requests
 
 app = Flask(__name__)
 
-# Options for yt_dlp extraction
+# yt-dlp Configuration
 YTDL_OPTIONS = {
     'format': 'bestaudio/best',
     'quiet': True,
@@ -18,12 +16,12 @@ YTDL_OPTIONS = {
 
 @app.route('/')
 def home():
-    """Renders the main music player interface."""
+    """Main Web Interface"""
     return render_template('index.html')
 
 @app.route('/api/search', methods=['GET'])
 def search_tracks():
-    """Searches YouTube for tracks based on a query string."""
+    """Search tracks on YouTube"""
     query = request.args.get('q', '').strip()
     if not query:
         return jsonify({'error': 'Search query is required'}), 400
@@ -51,14 +49,13 @@ def search_tracks():
 
 @app.route('/api/stream/<video_id>', methods=['GET'])
 def get_stream_info(video_id):
-    """Retrieves direct audio stream URL and details for a given video ID."""
+    """Retrieve audio stream URL for a given video ID"""
     url = f"https://www.youtube.com/watch?v={video_id}"
     
     try:
         with yt_dlp.YoutubeDL(YTDL_OPTIONS) as ydl:
             info = ydl.extract_info(url, download=False)
             
-            # Select best audio format
             audio_url = None
             for fmt in info.get('formats', []):
                 if fmt.get('acodec') != 'none' and fmt.get('vcodec') == 'none':
@@ -80,7 +77,7 @@ def get_stream_info(video_id):
 
 @app.route('/api/proxy')
 def proxy_audio():
-    """Proxies the raw audio stream to bypass CORS and access restrictions."""
+    """Proxy audio stream to prevent direct CORS issues"""
     audio_url = request.args.get('url')
     if not audio_url:
         return jsonify({'error': 'Missing stream URL'}), 400
@@ -96,6 +93,6 @@ def proxy_audio():
     )
 
 if __name__ == '__main__':
-    # Default host/port setup for local development and Android packaging
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)
+           
