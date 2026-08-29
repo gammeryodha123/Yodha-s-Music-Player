@@ -9,11 +9,17 @@ package.name = yodhasmusicplayer
 # (str) Package domain (needed for android packaging)
 package.domain = org.yodha
 
+# (str) Source code where the main.py / app.py live
+source.dir = .
+
 # (str) Source files to include (ensuring jpg is included)
 source.include_exts = py,png,jpg,kv,atlas,html,js,css
 
 # (str) Application entry point
 source.main = app.py
+
+# (str) Application version
+version = 1.0
 
 # (str) Path to application icon using your specific filename
 icon.filename = 1787932743309~2.jpg
