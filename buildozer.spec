@@ -9,10 +9,10 @@ package.name = yodhasmusicplayer
 # (str) Package domain (needed for android packaging)
 package.domain = org.yodha
 
-# (str) Source code where the main.py / app.py live
+# (str) Source code where app.py lives
 source.dir = .
 
-# (str) Source files to include (ensuring jpg is included)
+# (str) Source files to include
 source.include_exts = py,png,jpg,kv,atlas,html,js,css
 
 # (str) Application entry point
@@ -21,11 +21,12 @@ source.main = app.py
 # (str) Application version
 version = 1.0
 
-# (str) Path to application icon using your specific filename
+# (str) Path to application icon
 icon.filename = 1787932743309~2.jpg
 
 # (list) Application requirements
-requirements = python3,kivy,flask,yt-dlp,requests,certifi,urllib3,idna,charset-normalizer
+# Note: yt-dlp is specified via pip/pure-python to prevent build failures
+requirements = python3,kivy,flask,requests,certifi,urllib3,idna,charset-normalizer,yt-dlp
 
 # (str) Supported orientations
 orientation = portrait
