@@ -3,11 +3,13 @@ name: Build Android APK
 on:
   push:
     branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout Repository
@@ -16,41 +18,42 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
-      - name: Install Dependencies
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             build-essential \
             git \
             ffmpeg \
-            libltdl-dev \
-            libffi-dev \
             libssl-dev \
-            python3-dev \
-            python3-pip \
+            libffi-dev \
+            libsqlite3-dev \
+            libbz2-dev \
+            liblzma-dev \
+            zlib1g-dev \
+            openjdk-17-jdk \
             zip \
             unzip \
-            openjdk-17-jdk \
             autoconf \
             libtool \
             pkg-config \
-            cmake \
-            lld
+            cmake
 
-      - name: Install Python Build Tools
+      - name: Install Python Dependencies & Buildozer
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install buildozer cython
 
       - name: Build APK with Buildozer
         run: |
-          buildozer -v android debug
+          # Automatically accept SDK licenses and build debug APK
+          yes | buildozer -v android debug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-apk
+          name: python-music-player-apk
           path: bin/*.apk
           
