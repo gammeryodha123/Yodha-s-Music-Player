@@ -9,15 +9,17 @@ package.name = yodhasmusicplayer
 # (str) Package domain (needed for android packaging)
 package.domain = org.yodha
 
-# (str) Source files to include (let it default to all files in the directory)
+# (str) Source files to include (ensuring jpg is included)
 source.include_exts = py,png,jpg,kv,atlas,html,js,css
 
-# (str) Application entry point (using app.py as requested)
+# (str) Application entry point
 source.main = app.py
 
+# (str) Path to application icon using your specific filename
+icon.filename = 1787932743309~2.jpg
+
 # (list) Application requirements
-# Add your Python dependencies here (Flask, yt-dlp, requests)
-requirements = python3,kivy,flask,yt-dlp,requests,certifi,urllib3,idna,charset-normalizer,idna
+requirements = python3,kivy,flask,yt-dlp,requests,certifi,urllib3,idna,charset-normalizer
 
 # (str) Supported orientations
 orientation = portrait
@@ -25,16 +27,16 @@ orientation = portrait
 # (list) Permissions
 android.permissions = INTERNET, ACCESS_NETWORK_STATE
 
-# (int) Target Android API, should be as high as possible.
+# (int) Target Android API
 android.api = 33
 
-# (int) Minimum API your APK will support.
+# (int) Minimum API your APK will support
 android.minapi = 21
 
-# (bool) Use a AndroidX support library
+# (bool) Use AndroidX support library
 android.androidx = True
 
-# (str) Supported architectures (arm64-v8a is standard for modern devices)
+# (str) Supported architectures
 android.archs = arm64-v8a, armeabi-v7a
 
 [buildozer]
